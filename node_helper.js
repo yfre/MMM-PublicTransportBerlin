@@ -127,12 +127,14 @@ module.exports = NodeHelper.create({
         properties.cssClass = "ubahnsign";
         break;
       case "bus":
-        colors.bg = "#B60079";
+      //  colors.bg = "#B60079";
         colors.fg = "#FFF";
         properties.cssClass = "bussign";
         break;
       case "tram":
-        colors = lineColors.tram[name];
+		  colors.bg ="#006a4d";
+		  colors.fg = "#FFF";
+        //colors = lineColors.tram[name];
         properties.cssClass = "tramsign";
         break;
       case "regional":
