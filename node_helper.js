@@ -132,8 +132,8 @@ module.exports = NodeHelper.create({
         properties.cssClass = "ptb-bussign";
         break;
       case "tram":
-		  colors.bg ="#006a4d";
-		  colors.fg = "#FFF";
+        colors.bg = "#006a4d";
+        colors.fg = "#FFF";
         //colors = lineColors.tram[name];
         properties.cssClass = "tramsign";
 
