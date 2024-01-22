@@ -1,6 +1,6 @@
 {
   "name": "mmm-publictransportberlin",
-  "version": "1.7.1",
+  "version": "2.0.0",
   "description": "Public transport module for MagicMirror² driven by BVG-Hafas data.",
   "repository": {
     "type": "git",
@@ -29,30 +29,30 @@
   },
   "homepage": "https://github.com/deg0nz/MMM-PublicTransportBerlin",
   "engines": {
-    "node": ">=14"
+    "node": ">=16"
   },
   "dependencies": {
-    "hafas-client": "^5.24",
-    "moment": "^2.29",
-    "vbb-line-colors": "^1.0.4",
+    "hafas-client": "^6.2.0",
+    "moment": "^2.30",
+    "vbb-line-colors": "^1.0.5",
     "vbb-short-station-name": "^1.0.1"
   },
   "devDependencies": {
-    "eslint": "^8.15.0",
+    "eslint": "^8.54.0",
     "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-import": "^2.26.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-json": "^3.1.0",
-    "eslint-plugin-prettier": "^4.0.0",
-    "prettier": "^2.6.2",
-    "stylelint": "^14.8.2",
-    "stylelint-config-prettier": "^9.0.3",
-    "stylelint-config-standard": "^25.0.0",
-    "stylelint-prettier": "^2.0.0"
+    "eslint-plugin-prettier": "^5.1.2",
+    "prettier": "^3.1.1",
+    "stylelint": "^15.11.0",
+    "stylelint-config-standard": "^34.0.0",
+    "stylelint-prettier": "^4.1.0"
   },
   "scripts": {
-    "lint": "eslint . && stylelint **/*.css",
-    "lint:fix": "eslint --fix . && stylelint --fix **/*.css",
+    "lint": "eslint . && stylelint **/*.css && prettier --check .",
+    "lint:fix": "eslint --fix . && stylelint --fix **/*.css && prettier --write .",
+    "query_station": "node ./convenience/query_stations.mjs bvg",
     "test": "npm run lint"
   }
 }

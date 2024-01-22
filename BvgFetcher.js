@@ -1,23 +1,23 @@
-/* global Log */
-
-const createClient = require("hafas-client");
 const shortenStationName = require("vbb-short-station-name");
-const bvgProfile = require("hafas-client/p/bvg");
+const Log = require("logger");
 const pjson = require("./package.json");
 
-const bvgClient = createClient(
-  bvgProfile,
-  `MMM-PublicTransportBerlin v${pjson.version}`
-);
-
-class BvgFetcher {
+module.exports = class BvgFetcher {
   constructor(config) {
     this.config = config;
-    this.id = config.name;
   }
 
-  getId() {
-    return this.id;
+  async init() {
+    const { createClient } = await import("hafas-client");
+    const { profile } = await import(`hafas-client/p/bvg/index.js`);
+    this.hafasClient = createClient(
+      profile,
+      `MMM-PublicTransportBerlin v${pjson.version}`
+    );
+  }
+
+  getIdentifier() {
+    return this.config.identifier;
   }
 
   getStationId() {
@@ -25,7 +25,7 @@ class BvgFetcher {
   }
 
   async getStationName() {
-    const station = await bvgClient.stop(this.config.stationId);
+    const station = await this.hafasClient.stop(this.config.stationId);
     return station.name;
   }
 
@@ -33,7 +33,7 @@ class BvgFetcher {
     if (typeof this.config.directionStationId === "undefined") {
       return "all directions";
     }
-    const station = await bvgClient.stop(this.config.directionStationId);
+    const station = await this.hafasClient.stop(this.config.directionStationId);
     return station.name;
   }
 
@@ -70,7 +70,10 @@ class BvgFetcher {
       };
     }
 
-    const departures = await bvgClient.departures(this.config.stationId, opt);
+    const departures = await this.hafasClient.departures(
+      this.config.stationId,
+      opt
+    );
     const processedDepartures = this.processData(departures);
 
     return processedDepartures;
@@ -78,11 +81,11 @@ class BvgFetcher {
 
   processData(data) {
     const departuresData = {
-      fetcherId: this.id,
+      fetcherId: this.config.identifier,
       departuresArray: []
     };
 
-    data.forEach((row) => {
+    data.departures.forEach((row) => {
       // check for:
       // excluded transportation types
       // ignored lines
@@ -90,8 +93,11 @@ class BvgFetcher {
       // TODO: Make real stop/station handling here
       // Quick fix to work around missing station objects
       if (!row.station) {
-        row.station = row.stop;
+        row.station = row.stop; // eslint-disable-line no-param-reassign
       }
+
+      // If log level is set to debug print infos about departures
+      if (config.logLevel.includes("DEBUG")) this.printDeparture(row); // eslint-disable-line no-undef
 
       if (
         !this.config.excludedTransportationTypes.includes(row.line.product) &&
@@ -117,7 +123,7 @@ class BvgFetcher {
     return departuresData;
   }
 
-  compareTimes(a, b) {
+  static compareTimes(a, b) {
     if (a.when < b.when) {
       return -1;
     }
@@ -128,12 +134,12 @@ class BvgFetcher {
   }
 
   // helper function to print departure for debugging
-  printDeparture(row) {
+  static printDeparture(row) {
     const delayMinutes = Math.floor(
       (((row.delay % 31536000) % 86400) % 3600) / 60
     );
 
-    const time = row.when.toLocaleTimeString([], {
+    const time = new Date(row.when).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit"
     });
@@ -142,6 +148,4 @@ class BvgFetcher {
       `${time} ${delayMinutes} ${row.line.product} ${row.direction} | stationId: ${row.station.id}`
     );
   }
-}
-
-module.exports = BvgFetcher;
+};

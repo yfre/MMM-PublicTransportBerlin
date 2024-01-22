@@ -23,9 +23,9 @@ The module looks like this:
 
 ## Preconditions
 
-* MagicMirror² instance
-* Node.js version >= 14
-* npm
+- MagicMirror² instance
+- Node.js version >= 16
+- npm
 
 ## Installation
 
@@ -47,54 +47,51 @@ git pull && npm install
 
 ## How to get the `stationId`
 
-You will need a `stationId` for your module. You can get it as described in the [BVG-rest API documentation](https://github.com/derhuerst/bvg-rest/blob/master/docs/).
-This is a cURL example for getting all possible stations with the keyword "alexanderplatz":
+You need the `stationId` for the station whose departures should be displayed.
 
-```console
-curl 'https://v5.bvg.transport.rest/locations?query=alexanderplatz'
-```
+Here's how to find out the `stationId`:
 
-The answer should contain one or more possible stations with valid station IDs. More queries are possible,
-like searching via coordinates or autocompletion of stations. Please check the [BVG-rest API documentation](https://github.com/derhuerst/bvg-rest/blob/master/docs/)
-for more options. Please note, that you need to query `1.bvg.transport.rest`.
+1. You have to be in the modules folder (`MagicMirror/modules/MMM-PublicTransportBerlin`).
+2. Then run the following command: `npm run query_station`.
+3. Enter a station name.
+4. The result could contain one or more possible stations with valid IDs.
+5. Use the appropriate ID as `stationId` in the configuration of the module.
 
-You can prettify the JSON output with [`jq`](https://stedolan.github.io/jq/) if you have it installed:
-
-```console
-curl 'https://v5.bvg.transport.rest/locations?query=alexanderplatz' | jq
-```
+_Note:_ If you have used our instructions to get the `stationId` befor March 2023, you certainly use long IDs (12 digits) in your config. We will be upgrading our main dependency (`hafas-client`) to version 6 in a few months. From this point on, the old (long) IDs will no longer work. We recommend that you switch to the short IDs now. Both short and long IDs currently work.
 
 ## Configuration
 
 The module is quite configurable. These are the possible options:
 
-|Option|Description|
-|---|---|
-|`name`|The name of the module instance (if you want multiple modules). This value must be *unique*.<br><br>**Type:** `string` This value is **Required**.<br>|
+<!-- prettier-ignore-start -->
+| Option | Description |
+|--------|-------------|
+|`stationName`|The name of the station.<br><br>**Type:** `string` This value is **optional**.<br>|
 |`stationId`|The ID of the station. How to get the ID for your station is described below.<br><br>**Type:** `string` This value is **Required**.|
 |`directionStationId`|If you want the module to show departures only in a specific direction, you can enter the ID of the next station on your line to specify the direction. <br><br> *Note: After some tests, the data delivery of this feature seems not to be as reliable as the normal version. Also, please make sure you actually have the right `stationId` for the direction station. Please check your MagicMirror log for errors before reporting them. <br> Additionally, more request results take more time for the request. So please make sure to keep your `maxUnreachableDepartures` and `maxReachabledepartures` low when using this feature.* <br><br> **Type:** `string` <br>**Default value:** `<empty>`|
 |`ignoredLines`|You can exclude different lines of a station by adding them to this array. Usually, this can be empty.<br><br>**Type:** `string array` (comma separated `strings` in the array).<br>**Default value:** `<empty>` <br>**Possible values:** All valid line names like `'U5'` (for subway) , `'M10'` or `'21'` (for tram), `'S75'` (for suburban) , `'Bus 200'`(for bus), etc.|
-|`excludedTransportationTypes`|Transportation types to be excluded from appearing on a module instance can be listed here.<br><br>**Type:** `string`, comma-separated list<br>**Default vaule:** `<empty>` <br>**Possible values:** `bus`, `tram`, `suburban`, `subway`, `regional`, `ferry`|
-|`marqueeLongDirections`|Makes a marquee/ticker text out of all direction descriptions with more than 25 characters. If this value is false, the descriptions are trimmed to the station names. You can see a video of it [here](https://ds.kayuk.de/kAfzU/) (rendered by a regular computer).<br><br> *Note: The rendering on the mirror is not perfect, but it is OK in my opinion. If the movement is not fluent enough for you, you should turn it off.*<br><br>**Type:** `boolean`<br>**Default vaule:** `true`|
+|`excludedTransportationTypes`|Transportation types to be excluded from appearing on a module instance can be listed here.<br><br>**Type:** `string`, comma-separated list<br>**Default value:** `<empty>` <br>**Possible values:** `bus`, `tram`, `suburban`, `subway`, `regional`, `ferry`|
+|`marqueeLongDirections`|Makes a marquee/ticker text out of all direction descriptions with more than 25 characters. If this value is false, the descriptions are trimmed to the station names. You can see a video of it [here](https://ds.kayuk.de/kAfzU/) (rendered by a regular computer).<br><br> *Note: The rendering on the mirror is not perfect, but it is OK in my opinion. If the movement is not fluent enough for you, you should turn it off.*<br><br>**Type:** `boolean`<br>**Default value:** `true`|
 |`interval`|How often the module should be updated. The value is given in milliseconds.<br><br>**Type:** `integer` (milliseconds)<br>**Default value:** `120000` (2 minutes)|
-|`hidden`|Visibility of the module.<br><br>**Type:** `boolean`<br>**Default vaule:** `false`|
-|`travelTimeToStation`|How long does it take you to get from the mirror to the station? The value is given in minutes. (this is the former `delay` option)<br><br>**Type:** `integer` (minutes)<br>**Default vaule:** `10` (10 minutes)|
-|`departureMinutes`|For how many minutes in the future should departures be fetched? If `travelTimeToStation` is set > 0, then this time will be added to `now() + travelTimeToStation`. (This could be obsolete in future versions but is needed for now.)<br><br>**Type:** `integer` (minutes)<br>**Default vaule:** `10` (10 minutes)|
-|`showColoredLineSymbols`|If you want the line colored and shaped or text only.<br><br>**Type:** `boolean`<br>**Default vaule:** `true`|
-|`useColorForRealtimeInfo`|Set colors for realtime information<br><br>**Type:** `boolean`<br>**Default vaule:** `true`|
-|`showTableHeaders`|Show or hides the table headers.<br><br>**Type:** `boolean`<br>**Default vaule:** `true`|
-|`showTableHeadersAsSymbols`|Show the table headers as text or symbols.<br><br>**Type:** `boolean`<br>**Default vaule:** `true`|
-|`maxUnreachableDepartures`|How many unreachable departures should be shown. Only necessary, of you set `travelTimeToStation` > 0<br><br>**Type:** `integer`<br>**Default vaule:** `3`|
-|`maxReachableDepartures`|How many reachable departures should be shown. If your `travelTimeToSteation = 0`, this is the value for the number of departures you want to see.<br><br>**Type:** `integer`<br>**Default vaule:** `7`|
-|`fadeUnreachableDepartures`|Activates/deactivates fading for unreachable departures.<br><br>**Type:** `boolean`<br>**Default vaule:** `true`|
-|`fadeReachableDepartures`|Activates/deactivates fading for reachable departures.<br><br>**Type:** `boolean`<br>**Default vaule:** `true`|
-|`fadePointForReachableDepartures`|Fading point for reachable departures. This value is also valid for `travelTimeToSteation == 0` <br><br>**Type:** `float`<br>**Default vaule:** `0.5` <br>**Possible values:** `0.0 - 1.0`|
-|`excludeDelayFromTimeLabel`|The API provides time labels which include the delay time of the departure. This flag removes the delay time to show times like they are shown in the BVG-App.<br><br>**Type:** `boolean`<br>**Default vaule:** `false`|
+|`hidden`|Visibility of the module.<br><br>**Type:** `boolean`<br>**Default value:** `false`|
+|`travelTimeToStation`|How long does it take you to get from the mirror to the station? The value is given in minutes. (this is the former `delay` option)<br><br>**Type:** `integer` (minutes)<br>**Default value:** `10` (10 minutes)|
+|`departureMinutes`|For how many minutes in the future should departures be fetched? If `travelTimeToStation` is set > 0, then this time will be added to `now() + travelTimeToStation`. (This could be obsolete in future versions but is needed for now.)<br><br>**Type:** `integer` (minutes)<br>**Default value:** `10` (10 minutes)|
+|`showColoredLineSymbols`|If you want the line colored and shaped or text only.<br><br>**Type:** `boolean`<br>**Default value:** `true`|
+|`useColorForRealtimeInfo`|Set colors for realtime information<br><br>**Type:** `boolean`<br>**Default value:** `true`|
+|`showTableHeaders`|Show or hides the table headers.<br><br>**Type:** `boolean`<br>**Default value:** `true`|
+|`showTableHeadersAsSymbols`|Show the table headers as text or symbols.<br><br>**Type:** `boolean`<br>**Default value:** `true`|
+|`maxUnreachableDepartures`|How many unreachable departures should be shown. Only necessary, of you set `travelTimeToStation` > 0<br><br>**Type:** `integer`<br>**Default value:** `3`|
+|`maxReachableDepartures`|How many reachable departures should be shown. If your `travelTimeToSteation = 0`, this is the value for the number of departures you want to see.<br><br>**Type:** `integer`<br>**Default value:** `7`|
+|`fadeUnreachableDepartures`|Activates/deactivates fading for unreachable departures.<br><br>**Type:** `boolean`<br>**Default value:** `true`|
+|`fadeReachableDepartures`|Activates/deactivates fading for reachable departures.<br><br>**Type:** `boolean`<br>**Default value:** `true`|
+|`fadePointForReachableDepartures`|Fading point for reachable departures. This value is also valid for `travelTimeToSteation == 0` <br><br>**Type:** `float`<br>**Default value:** `0.5` <br>**Possible values:** `0.0 - 1.0`|
+|`excludeDelayFromTimeLabel`|The API provides time labels which include the delay time of the departure. This flag removes the delay time to show times like they are shown in the BVG-App.<br><br>**Type:** `boolean`<br>**Default value:** `false`|
 |`animationSpeed`|Speed of the update animation. The value is given in milliseconds.<br><br>**Type:** `integer` (milliseconds)<br>**Default value:** `3000` (3 seconds)|
 |`showDirection`|Shows the direction in the module instance's header if the module instance is directed.<br><br>**Type:** `boolean`<br>**Default value:** `true`|
 |`useBrightScheme`|Brightens the display table.<br><br>**Type:** `boolean`<br>**Default value:** `false`|
 |`timezone`|Configure timezone.<br><br>**Type:** `string`<br>**Default value:** `Europe/Berlin`|
 |`shortenStationNames`|Whether to use [`vbb-short-station-name`](https://github.com/derhuerst/vbb-short-station-name) to shorten Station names.<br><br>**Type:** `boolean`<br>**Default value:** `true`|
+<!-- prettier-ignore-end -->
 
 Here is an example of an entry in `config.js`:
 
@@ -103,8 +100,8 @@ Here is an example of an entry in `config.js`:
     module: "MMM-PublicTransportBerlin",
     position: "top_right",
     config: {
-        name: "Alexanderplatz",
-        stationId: "900000100003",
+        stationName: "Alexanderplatz",
+        stationId: "900100003",
         hidden: false,
         ignoredLines: ["U5", "U8", "S75", "Bus 100"],
         excludedTransportationTypes: "bus,suburban,subway",
@@ -133,10 +130,10 @@ Multiple instances of this module are possible. Just add another entry of the MM
 
 ## Special Thanks
 
-* [Michael Teeuw](https://github.com/MichMich) for inspiring me and many others to build a MagicMirror.
-* [Jannis Redmann](https://github.com/derhuerst) for creating the [hafas-client](https://github.com/public-transport/hafas-client).
-You made my life a lot easier with this! Please consider supporting him on [Patreon](https://patreon.com/derhuerst)!
-* The community of [magicmirror.builders](https://magicmirror.builders) for help in the development process and all contributors for finding and fixing errors in this module.
+- [Michael Teeuw](https://github.com/MichMich) for inspiring me and many others to build a MagicMirror.
+- [Jannis Redmann](https://github.com/derhuerst) for creating the [hafas-client](https://github.com/public-transport/hafas-client).
+  You made my life a lot easier with this! Please consider supporting him on [Patreon](https://patreon.com/derhuerst)!
+- The community of [magicmirror.builders](https://magicmirror.builders) for help in the development process and all contributors for finding and fixing errors in this module.
 
 ## Issues
 

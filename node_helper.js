@@ -9,11 +9,12 @@ module.exports = NodeHelper.create({
   },
 
   async createFetcher(config) {
-    const fetcherId = config.name;
+    const fetcherId = config.identifier;
     let fetcher;
 
     if (typeof this.departuresFetchers[fetcherId] === "undefined") {
       fetcher = new BvgFetcher(config);
+      await fetcher.init();
       this.departuresFetchers[fetcherId] = fetcher;
       this.sendInit(fetcher);
 
@@ -59,10 +60,10 @@ module.exports = NodeHelper.create({
         stationName += `<br />(toward ${directionDescriptor})`;
       }
 
-      this.sendSocketNotification("FETCHER_INIT", {
+      this.sendSocketNotification("FETCHER_INITIALIZED", {
         stationId: fetcher.getStationId(),
         stationName,
-        fetcherId: fetcher.getId()
+        fetcherId: fetcher.getIdentifier()
       });
     } catch (error) {
       Log.error(`Error initializing fetcher: ${error}`);
@@ -71,15 +72,14 @@ module.exports = NodeHelper.create({
 
   async getDepartures(fetcherId) {
     try {
-      const departuresData = await this.departuresFetchers[
-        fetcherId
-      ].fetchDepartures();
+      const departuresData =
+        await this.departuresFetchers[fetcherId].fetchDepartures();
 
       this.pimpDeparturesArray(departuresData.departuresArray);
-      this.sendSocketNotification("DEPARTURES", departuresData);
+      this.sendSocketNotification("DEPARTURES_FETCHED", departuresData);
     } catch (error) {
       Log.log(
-        `Error while fetching departures (for module Instance ${fetcherId}): ${error}`
+        `Error while fetching departures (for module instance ${fetcherId}): ${error}`
       );
       // Add stationId to error for identification in the main instance
       error.fetcherId = fetcherId;
@@ -120,34 +120,35 @@ module.exports = NodeHelper.create({
     switch (type) {
       case "suburban":
         colors = lineColors.suburban[name];
-        properties.cssClass = "sbahnsign";
+        properties.cssClass = "ptb-sbahnsign";
         break;
       case "subway":
         colors = lineColors.subway[name];
-        properties.cssClass = "ubahnsign";
+        properties.cssClass = "ptb-ubahnsign";
         break;
       case "bus":
       //  colors.bg = "#B60079";
         colors.fg = "#FFF";
-        properties.cssClass = "bussign";
+        properties.cssClass = "ptb-bussign";
         break;
       case "tram":
 		  colors.bg ="#006a4d";
 		  colors.fg = "#FFF";
         //colors = lineColors.tram[name];
         properties.cssClass = "tramsign";
+
         break;
       case "regional":
         colors = lineColors.regional[name];
-        properties.cssClass = "dbsign";
+        properties.cssClass = "ptb-dbsign";
         break;
       case "express":
         if (lineType === "LOCOMORE") {
           colors.bg = "#E5690B";
           colors.fg = "#3E1717";
-          properties.cssClass = "locsign";
+          properties.cssClass = "ptb-locsign";
         } else {
-          properties.cssClass = "expresssign";
+          properties.cssClass = "ptb-expresssign";
         }
         break;
     }
@@ -172,16 +173,12 @@ module.exports = NodeHelper.create({
   },
 
   socketNotificationReceived(notification, payload) {
-    if (notification === "GET_DEPARTURES") {
+    if (notification === "FETCH_DEPARTURES") {
       this.getDepartures(payload);
     }
 
     if (notification === "CREATE_FETCHER") {
       this.createFetcher(payload);
-    }
-
-    if (notification === "STATION_NAME_MISSING_AFTER_INIT") {
-      this.sendInit(this.departuresFetchers[payload]);
     }
   }
 });
